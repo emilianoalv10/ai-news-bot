@@ -1,4 +1,4 @@
-"""Summarize AI tweets using Claude API."""
+"""Summarize AI news using Claude API."""
 
 import os
 
@@ -8,10 +8,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def summarize_tweets(tweets: list[dict]) -> str:
-    """Send tweets to Claude and get a structured daily AI news summary."""
-    if not tweets:
-        return "No hay tweets relevantes de AI para hoy."
+def summarize_news(items: list[dict]) -> str:
+    """Send news items to Claude and get a structured daily AI news summary."""
+    if not items:
+        return "No se encontraron noticias relevantes de AI para hoy."
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -19,32 +19,37 @@ def summarize_tweets(tweets: list[dict]) -> str:
 
     client = anthropic.Anthropic(api_key=api_key)
 
-    tweets_text = "\n\n".join(
-        f"@{t['username']} ({t['likes']}❤️ {t['retweets']}🔁):\n{t['text']}"
-        for t in tweets
+    items_text = "\n\n".join(
+        f"[{item.get('source', 'Unknown')}] {item['title']}\n"
+        f"{item.get('text', '')}\n"
+        f"URL: {item.get('url', 'N/A')} | "
+        f"Score: {item.get('score', 'N/A')} | Comments: {item.get('comments', 'N/A')}"
+        for item in items
     )
 
-    prompt = f"""Analiza los siguientes tweets sobre Inteligencia Artificial del día de hoy y generá un resumen en español.
+    prompt = f"""Analiza las siguientes noticias sobre Inteligencia Artificial recopiladas hoy de Google News, Reddit y Hacker News. Generá un resumen completo en español.
 
 El resumen debe tener estas secciones:
 
 ## 🔥 Trending del Día
-Las 3-5 noticias o temas más importantes/virales del día en AI.
+Las 3-5 noticias o temas más importantes/virales del día en AI. Incluí los links.
 
 ## 📰 Resumen de Novedades
-Un resumen organizado por categorías (nuevos modelos, regulación, productos, investigación, etc.) de todas las novedades relevantes.
+Un resumen organizado por categorías (nuevos modelos, regulación, productos, investigación, herramientas, etc.) de todas las novedades relevantes.
 
-## 🧵 Tweets Destacados
-Los 3-5 tweets más interesantes con el @usuario y un breve contexto.
+## 🏆 Posts Más Destacados
+Los 5 posts/artículos con más engagement, indicando fuente, título y link.
 
 ## 📊 Tendencias Generales
-Un párrafo breve sobre hacia dónde se mueve la industria según las noticias del día.
+Un párrafo sobre hacia dónde se mueve la industria según las noticias del día.
+
+Sé conciso pero informativo. Escribí en español argentino.
 
 ---
 
-TWEETS:
+NOTICIAS RECOPILADAS:
 
-{tweets_text}"""
+{items_text}"""
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
