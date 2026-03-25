@@ -9,7 +9,7 @@ load_dotenv()
 
 
 def summarize_news(items: list[dict]) -> str:
-    """Send news items to Claude and get a top 5 AI news summary in English."""
+    """Send news items to Claude and get a top 5 trending AI news."""
     if not items:
         return "No relevant AI news found today."
 
@@ -29,21 +29,26 @@ def summarize_news(items: list[dict]) -> str:
 
     prompt = f"""Analyze the following AI news collected today from Google News, Reddit, and Hacker News.
 
-Generate a summary in English with EXACTLY this format:
+Generate ONLY a Top 5 Trending list in English. Use this EXACT format (plain text, no markdown headers, ready to post on a corporate social network):
 
-## 🔥 Top 5 AI News of the Day
+🔥 Top 5 AI Trending Today
 
-For each of the 5 most important/viral news items:
-1. **[Title]** - Brief 2-3 sentence summary explaining why it matters. (Source: [source]) [link]
-2. ...
-3. ...
-4. ...
-5. ...
+1. [Title] - Brief 2-3 sentence summary. [link]
 
-## 📊 Industry Trends
-One short paragraph about where the AI industry is heading based on today's news.
+2. [Title] - Brief 2-3 sentence summary. [link]
 
-Keep it concise, professional, and engaging. This will be posted on Viva Engage (corporate social network).
+3. [Title] - Brief 2-3 sentence summary. [link]
+
+4. [Title] - Brief 2-3 sentence summary. [link]
+
+5. [Title] - Brief 2-3 sentence summary. [link]
+
+Rules:
+- Keep it concise and professional
+- Include the actual URL/link for each news item
+- Pick the 5 most important/viral topics
+- No markdown formatting, just plain text with emojis
+- End with a single line: #AI #ArtificialIntelligence #Trending
 
 ---
 
@@ -53,7 +58,7 @@ COLLECTED NEWS:
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=2048,
+        max_tokens=1024,
         messages=[{"role": "user", "content": prompt}],
     )
 

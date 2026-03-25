@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""AI News Bot - Daily AI news summary from free sources, published to Viva Engage."""
+"""AI News Bot - Top 5 AI trending, published to Viva Engage."""
 
 import argparse
 from datetime import datetime, timezone
 
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
 
 from sources import fetch_all_sources
@@ -17,13 +16,10 @@ console = Console()
 
 
 def run_summary(publish: bool = False):
-    """Fetch news and generate the AI news summary."""
+    """Fetch news, generate top 5, and optionally publish to Viva Engage."""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    console.print(Panel(
-        f"[bold cyan]AI News Bot[/] - {today}",
-        subtitle="Fetching AI news...",
-    ))
+    console.print(Panel(f"[bold cyan]AI News Bot[/] - {today}", subtitle="Fetching AI news..."))
 
     # Step 1: Fetch from all sources
     console.print("\n[bold green]Collecting news...[/]")
@@ -36,19 +32,14 @@ def run_summary(publish: bool = False):
         console.print("[yellow]No relevant AI news found today.[/]")
         return
 
-    # Step 2: Summarize with Claude
-    with console.status("[bold green]Generating summary with Claude..."):
+    # Step 2: Generate top 5 with Claude
+    with console.status("[bold green]Generating Top 5 with Claude..."):
         summary = summarize_news(items)
 
     # Step 3: Display
-    console.print(Panel(Markdown(summary), title=f"📋 AI News - {today}", border_style="cyan"))
+    console.print(Panel(summary, title=f"📋 Top 5 AI Trending - {today}", border_style="cyan"))
 
-    # Step 4: Save to file
-    filename = f"summaries/summary_{today}.md"
-    _save_summary(filename, summary, today)
-    console.print(f"\n💾 Summary saved to [bold]{filename}[/]")
-
-    # Step 5: Publish to Viva Engage
+    # Step 4: Publish to Viva Engage
     if publish:
         with console.status("[bold green]Publishing to Viva Engage..."):
             try:
@@ -63,18 +54,9 @@ def run_summary(publish: bool = False):
         console.print("\n💡 Use [bold]--publish[/] to post to Viva Engage.")
 
 
-def _save_summary(filename: str, summary: str, date: str):
-    """Save the summary to a markdown file."""
-    import os
-    os.makedirs("summaries", exist_ok=True)
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(f"# AI News Summary - {date}\n\n")
-        f.write(summary)
-
-
 def main():
-    parser = argparse.ArgumentParser(description="AI News Bot - Daily AI news (free sources)")
-    parser.add_argument("--publish", action="store_true", help="Publish summary to Viva Engage")
+    parser = argparse.ArgumentParser(description="AI News Bot - Top 5 AI Trending")
+    parser.add_argument("--publish", action="store_true", help="Publish to Viva Engage")
     parser.add_argument("--schedule", action="store_true", help="Run daily at 09:00 UTC")
     args = parser.parse_args()
 
