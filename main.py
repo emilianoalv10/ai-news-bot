@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AI News Bot - Daily AI news summary from free sources."""
+"""AI News Bot - Daily AI news summary from free sources, published to Viva Engage."""
 
 import argparse
 from datetime import datetime, timezone
@@ -10,35 +10,34 @@ from rich.panel import Panel
 
 from sources import fetch_all_sources
 from summarizer import summarize_news
+from viva_engage import publish_to_viva_engage
 from config import MAX_ITEMS_FOR_SUMMARY
 
 console = Console()
 
 
-def run_summary():
+def run_summary(publish: bool = False):
     """Fetch news and generate the AI news summary."""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     console.print(Panel(
-        f"[bold cyan]AI News Bot[/] - Resumen del {today}",
-        subtitle="Buscando novedades de AI...",
+        f"[bold cyan]AI News Bot[/] - {today}",
+        subtitle="Fetching AI news...",
     ))
 
     # Step 1: Fetch from all sources
-    console.print("\n[bold green]Recopilando noticias...[/]")
+    console.print("\n[bold green]Collecting news...[/]")
     items = fetch_all_sources()
-
-    # Limit total items
     items = items[:MAX_ITEMS_FOR_SUMMARY]
 
-    console.print(f"\n✅ Se encontraron [bold]{len(items)}[/] noticias relevantes.\n")
+    console.print(f"\n✅ Found [bold]{len(items)}[/] relevant news items.\n")
 
     if not items:
-        console.print("[yellow]No se encontraron noticias relevantes hoy.[/]")
+        console.print("[yellow]No relevant AI news found today.[/]")
         return
 
     # Step 2: Summarize with Claude
-    with console.status("[bold green]Generando resumen con Claude..."):
+    with console.status("[bold green]Generating summary with Claude..."):
         summary = summarize_news(items)
 
     # Step 3: Display
@@ -47,7 +46,21 @@ def run_summary():
     # Step 4: Save to file
     filename = f"summaries/summary_{today}.md"
     _save_summary(filename, summary, today)
-    console.print(f"\n💾 Resumen guardado en [bold]{filename}[/]")
+    console.print(f"\n💾 Summary saved to [bold]{filename}[/]")
+
+    # Step 5: Publish to Viva Engage
+    if publish:
+        with console.status("[bold green]Publishing to Viva Engage..."):
+            try:
+                result = publish_to_viva_engage(summary)
+                msg_id = result.get("messages", [{}])[0].get("id", "unknown")
+                console.print(f"\n✅ Published to Viva Engage! (Message ID: {msg_id})")
+            except ValueError as e:
+                console.print(f"\n[red]❌ Config error: {e}[/]")
+            except Exception as e:
+                console.print(f"\n[red]❌ Failed to publish: {e}[/]")
+    else:
+        console.print("\n💡 Use [bold]--publish[/] to post to Viva Engage.")
 
 
 def _save_summary(filename: str, summary: str, date: str):
@@ -61,6 +74,7 @@ def _save_summary(filename: str, summary: str, date: str):
 
 def main():
     parser = argparse.ArgumentParser(description="AI News Bot - Daily AI news (free sources)")
+    parser.add_argument("--publish", action="store_true", help="Publish summary to Viva Engage")
     parser.add_argument("--schedule", action="store_true", help="Run daily at 09:00 UTC")
     args = parser.parse_args()
 
@@ -68,15 +82,15 @@ def main():
         import schedule
         import time
 
-        console.print("[bold]Modo programado activado.[/] Se ejecutará todos los días a las 09:00 UTC.\n")
-        schedule.every().day.at("09:00").do(run_summary)
-        run_summary()
+        console.print("[bold]Schedule mode.[/] Running daily at 09:00 UTC.\n")
+        schedule.every().day.at("09:00").do(run_summary, publish=args.publish)
+        run_summary(publish=args.publish)
 
         while True:
             schedule.run_pending()
             time.sleep(60)
     else:
-        run_summary()
+        run_summary(publish=args.publish)
 
 
 if __name__ == "__main__":

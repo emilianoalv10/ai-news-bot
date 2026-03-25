@@ -9,9 +9,9 @@ load_dotenv()
 
 
 def summarize_news(items: list[dict]) -> str:
-    """Send news items to Claude and get a structured daily AI news summary."""
+    """Send news items to Claude and get a top 5 AI news summary in English."""
     if not items:
-        return "No se encontraron noticias relevantes de AI para hoy."
+        return "No relevant AI news found today."
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -27,33 +27,33 @@ def summarize_news(items: list[dict]) -> str:
         for item in items
     )
 
-    prompt = f"""Analiza las siguientes noticias sobre Inteligencia Artificial recopiladas hoy de Google News, Reddit y Hacker News. Generá un resumen completo en español.
+    prompt = f"""Analyze the following AI news collected today from Google News, Reddit, and Hacker News.
 
-El resumen debe tener estas secciones:
+Generate a summary in English with EXACTLY this format:
 
-## 🔥 Trending del Día
-Las 3-5 noticias o temas más importantes/virales del día en AI. Incluí los links.
+## 🔥 Top 5 AI News of the Day
 
-## 📰 Resumen de Novedades
-Un resumen organizado por categorías (nuevos modelos, regulación, productos, investigación, herramientas, etc.) de todas las novedades relevantes.
+For each of the 5 most important/viral news items:
+1. **[Title]** - Brief 2-3 sentence summary explaining why it matters. (Source: [source]) [link]
+2. ...
+3. ...
+4. ...
+5. ...
 
-## 🏆 Posts Más Destacados
-Los 5 posts/artículos con más engagement, indicando fuente, título y link.
+## 📊 Industry Trends
+One short paragraph about where the AI industry is heading based on today's news.
 
-## 📊 Tendencias Generales
-Un párrafo sobre hacia dónde se mueve la industria según las noticias del día.
-
-Sé conciso pero informativo. Escribí en español argentino.
+Keep it concise, professional, and engaging. This will be posted on Viva Engage (corporate social network).
 
 ---
 
-NOTICIAS RECOPILADAS:
+COLLECTED NEWS:
 
 {items_text}"""
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=4096,
+        max_tokens=2048,
         messages=[{"role": "user", "content": prompt}],
     )
 
